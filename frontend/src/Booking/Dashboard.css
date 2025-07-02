@@ -1,0 +1,74 @@
+.user-dashboard {
+  padding: 2rem;
+  font-family: "Inter", sans-serif;
+  background-color: #f9fafb;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+  color: #1e3a8a;
+}
+
+.car-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.car-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+.car-card:hover {
+  transform: translateY(-4px);
+}
+
+.car-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.car-info {
+  padding: 1rem;
+}
+
+.car-info h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.car-info p {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 0.25rem 0;
+}
+
+.book-btn {
+  margin-top: 1rem;
+  padding: 0.6rem 1.2rem;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  width: 100%;
+}
+
+.book-btn:hover {
+  background: #1d4ed8;
+}
+
+.book-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}

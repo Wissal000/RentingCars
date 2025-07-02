@@ -1,0 +1,101 @@
+/* AddCar.css */
+.add-car-container {
+  font-family: "Poppins", sans-serif;
+  max-width: 700px;
+  margin: 3rem auto;
+  padding: 2rem 2rem;
+  background: #fafafa;
+  border-radius: 10px;
+  box-shadow: 0 3px 6px rgb(0 0 0 / 0.1);
+  color: #333;
+}
+
+.add-car-container h2 {
+  font-weight: 600;
+  margin-bottom: 2rem;
+  color: #3b82f6; /* lighter blue */
+  text-align: center;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #555;
+}
+
+.form-control {
+  border-radius: 6px;
+  border: 1px solid #d1d5db; /* soft gray */
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  color: #444;
+  transition: border-color 0.2s ease;
+  background-color: white;
+}
+
+.form-control:focus {
+  border-color: #60a5fa; /* subtle blue */
+  box-shadow: none;
+  outline: none;
+  background-color: #f9fafb;
+}
+
+.form-select {
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  padding: 0.4rem 0.75rem;
+  font-size: 1rem;
+  color: #444;
+  background-color: white;
+  transition: border-color 0.2s ease;
+}
+
+.form-select:focus {
+  border-color: #60a5fa;
+  box-shadow: none;
+  outline: none;
+  background-color: #f9fafb;
+}
+
+.form-check-label {
+  font-weight: 500;
+  color: #16a34a; /* softer green */
+  user-select: none;
+}
+
+button[type="submit"] {
+  width: 100%;
+  background-color: #3b82f6;
+  border: none;
+  padding: 0.6rem 0;
+  border-radius: 8px;
+  font-weight: 600;
+  color: white;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 6px rgb(59 130 246 / 0.25);
+}
+
+button[type="submit"]:hover:not(:disabled) {
+  background-color: #2563eb;
+  box-shadow: 0 4px 12px rgb(37 99 235 / 0.3);
+}
+
+button[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input[type="file"] {
+  padding: 0.3rem 0.75rem;
+  background-color: white;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+}
+
+@media (max-width: 576px) {
+  .add-car-container {
+    padding: 1.5rem 1.5rem;
+  }
+}
