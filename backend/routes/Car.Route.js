@@ -78,4 +78,55 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+router.put("/:id", upload.single("image"), async (req, res) => {
+  try {
+    const {
+      name,
+      brand,
+      pricePerDay,
+      description,
+      year,
+      color,
+      seats,
+      fuelType,
+      transmission,
+      available,
+    } = req.body;
+
+    // Build update object dynamically
+    const updateData = {
+      ...(name && { name }),
+      ...(brand && { brand }),
+      ...(pricePerDay && { pricePerDay: String(pricePerDay) }),
+      ...(description && { description }),
+      ...(year && { year: Number(year) }),
+      ...(color && { color: String(color) }),
+      ...(seats && { seats: Number(seats) }),
+      ...(fuelType && { fuelType }),
+      ...(transmission && { transmission }),
+      ...(available !== undefined && { available: available === "true" }),
+    };
+
+    // If image is uploaded, add image URL
+    if (req.file?.path) {
+      updateData.image = req.file.path;
+    }
+
+    const updatedCar = await Car.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+
+    if (!updatedCar) {
+      return res.status(404).json({ message: "Car not found" });
+    }
+
+    res.json({ message: "Car updated successfully", car: updatedCar });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 export default router;
