@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   Calendar,
   CarIcon,
-  Edit,
   Filter,
   Mail,
   MapPin,
@@ -74,7 +73,7 @@ interface Booking {
     transmission: string;
     image?: string;
   };
-  status?: "pending" | "confirmed" | "active" | "completed" | "cancelled";
+  status?: "pending" | "confirmed" | "completed" | "cancelled";
   totalAmount?: number;
   createdAt?: string;
 }
@@ -85,13 +84,11 @@ export default function AdminBookingPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [viewMode, setViewMode] = useState<"cards">("cards");
 
   useEffect(() => {
-    fetchBookings(); 
+    fetchBookings();
   }, []);
-
 
   const fetchBookings = async () => {
     try {
@@ -122,7 +119,25 @@ export default function AdminBookingPage() {
       toast.error("Failed to delete booking");
     }
   };
-  // Add helper function to calculate total amount if not provided by API
+
+  const handleStatusChange = async (bookingId: string, newStatus: string) => {
+    try {
+      // Call your backend to send the notification email
+      const response = await axios.post(
+        `http://localhost:8080/booking/${bookingId}`,
+        { status: newStatus }
+      );
+
+      toast.success("Status updated & email sent successfully ✅");
+      // Refresh data
+      fetchBookings();
+    } catch (error) {
+      console.error("Error updating status and sending email:", error);
+      toast.error("Failed to update status or send email ❌");
+    }
+  };
+
+  // Add helper function to calculate total amount
   const calculateTotalAmount = (booking: any) => {
     const days = calculateDays(booking.rentalStartDate, booking.rentalEndDate);
     const pricePerDay =
@@ -154,27 +169,11 @@ export default function AdminBookingPage() {
     setFilteredBookings(filtered);
   }, [searchTerm, statusFilter, bookings]);
 
-  const getStatusIcon = (status?: string) => {
-    switch (status) {
-      case "confirmed":
-        return <CheckCircle className="h-4 w-4" />;
-      case "active":
-        return <Clock className="h-4 w-4" />;
-      case "completed":
-        return <CheckCircle className="h-4 w-4" />;
-      case "cancelled":
-        return <XCircle className="h-4 w-4" />;
-      default:
-        return <AlertCircle className="h-4 w-4" />;
-    }
-  };
 
   const getStatusColor = (status?: string) => {
     switch (status) {
       case "confirmed":
         return "bg-blue-100 text-blue-800";
-      case "active":
-        return "bg-green-100 text-green-800";
       case "completed":
         return "bg-gray-100 text-gray-800";
       case "cancelled":
@@ -193,9 +192,6 @@ export default function AdminBookingPage() {
 
   const stats = {
     total: bookings.length,
-    pending: bookings.filter((b) => b.status === "pending").length,
-    active: bookings.filter((b) => b.status === "active").length,
-    completed: bookings.filter((b) => b.status === "completed").length,
     revenue: bookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0),
   };
 
@@ -272,48 +268,6 @@ export default function AdminBookingPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <AlertCircle className="h-8 w-8 text-yellow-600" />
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.pending}
-                  </p>
-                  <p className="text-gray-600">Pending</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Clock className="h-8 w-8 text-green-600" />
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.active}
-                  </p>
-                  <p className="text-gray-600">Active</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <CheckCircle className="h-8 w-8 text-gray-600" />
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.completed}
-                  </p>
-                  <p className="text-gray-600">Completed</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
                 <CarIcon className="h-8 w-8 text-purple-600" />
                 <div className="ml-4">
                   <p className="text-2xl font-bold text-gray-900">
@@ -350,7 +304,6 @@ export default function AdminBookingPage() {
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="completed">Completed</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
@@ -360,11 +313,8 @@ export default function AdminBookingPage() {
               <div className="flex gap-2">
                 <Tabs
                   value={viewMode}
-                  onValueChange={(value) =>
-                    setViewMode(value as "cards")
-                  }
-                >
-                </Tabs>
+                  onValueChange={(value) => setViewMode(value as "cards")}
+                ></Tabs>
               </div>
             </div>
           </CardContent>
@@ -386,14 +336,36 @@ export default function AdminBookingPage() {
                           {booking.firstName} {booking.lastName}
                         </CardTitle>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge
-                            className={`${getStatusColor(
-                              booking.status
-                            )} flex items-center gap-1`}
+                          <Select
+                            defaultValue={booking.status}
+                            onValueChange={(value) =>
+                              handleStatusChange(booking._id, value)
+                            }
                           >
-                            {getStatusIcon(booking.status)}
-                            {booking.status || "pending"}
-                          </Badge>
+                            <SelectTrigger
+                              className={`w-[140px] text-xs py-1 px-2 ${getStatusColor(
+                                booking.status
+                              )} flex items-center gap-1 rounded-full border-none shadow-none`}
+                            >
+                              <SelectValue
+                                placeholder="pending"
+                                className="flex items-center gap-1 capitalize"
+                              />
+                            </SelectTrigger>
+                            <SelectContent className="text-sm">
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="confirmed">
+                                Confirmed
+                              </SelectItem>
+                              
+                              <SelectItem value="completed">
+                                Completed
+                              </SelectItem>
+                              <SelectItem value="cancelled">
+                                Cancelled
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                       <div className="text-right">
@@ -554,11 +526,6 @@ export default function AdminBookingPage() {
                           </div>
                         </DialogContent>
                       </Dialog>
-
-                      <Button variant="outline" size="sm">
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
 
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
