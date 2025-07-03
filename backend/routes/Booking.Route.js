@@ -50,4 +50,22 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Delete a booking by ID
+router.delete("/:id", async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const deletedBooking = await BookModel.findByIdAndDelete(bookingId);
+
+    if (!deletedBooking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    res.json({ message: "Booking deleted successfully", deletedBooking });
+  } catch (error) {
+    console.error("Error deleting booking:", error);
+    res.status(500).json({ error: "Failed to delete booking" });
+  }
+});
+
+
 export default router;
