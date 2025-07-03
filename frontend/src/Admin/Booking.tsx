@@ -16,6 +16,7 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Hash,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -42,14 +43,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -58,7 +51,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import axios from "axios";
 
 interface Booking {
@@ -93,13 +86,13 @@ export default function AdminBookingPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  const [viewMode, setViewMode] = useState<"cards">("cards");
 
   useEffect(() => {
-    fetchBookings(); // now it works
+    fetchBookings(); 
   }, []);
 
-  // ✅ Move fetchBookings outside
+
   const fetchBookings = async () => {
     try {
       const response = await axios.get("http://localhost:8080/booking");
@@ -368,13 +361,9 @@ export default function AdminBookingPage() {
                 <Tabs
                   value={viewMode}
                   onValueChange={(value) =>
-                    setViewMode(value as "cards" | "table")
+                    setViewMode(value as "cards")
                   }
                 >
-                  <TabsList>
-                    <TabsTrigger value="cards">Cards</TabsTrigger>
-                    <TabsTrigger value="table">Table</TabsTrigger>
-                  </TabsList>
                 </Tabs>
               </div>
             </div>
@@ -436,6 +425,10 @@ export default function AdminBookingPage() {
                       <div className="flex items-center text-sm text-gray-600">
                         <MapPin className="h-4 w-4 mr-2" />
                         {booking.city}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Hash className="h-4 w-4 mr-2" />
+                        {booking.licenseNumber}
                       </div>
                     </div>
 
@@ -607,119 +600,6 @@ export default function AdminBookingPage() {
                 </Card>
               ))}
             </div>
-          </TabsContent>
-
-          <TabsContent value="table">
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Car</TableHead>
-                    <TableHead>Rental Period</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredBookings.map((booking) => (
-                    <TableRow key={booking._id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">
-                            {booking.firstName} {booking.lastName}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {booking.email}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">
-                            {booking.carId.brand} {booking.carId.name}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {booking.carId.pricePerDay}/day
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="text-sm">
-                            {new Date(
-                              booking.rentalStartDate
-                            ).toLocaleDateString()}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            to{" "}
-                            {new Date(
-                              booking.rentalEndDate
-                            ).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`${getStatusColor(
-                            booking.status
-                          )} flex items-center gap-1 w-fit`}
-                        >
-                          {getStatusIcon(booking.status)}
-                          {booking.status || "pending"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        dh {booking.totalAmount}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 hover:text-red-700 bg-transparent"
-                                aria-label="Delete booking"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-
-                            <AlertDialogContent className="max-w-sm">
-                              <AlertDialogHeader>
-                                <AlertDialogTitle className="text-lg font-semibold">
-                                  Are you sure?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription className="mt-1 text-sm text-muted-foreground">
-                                  This will permanently delete the booking.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter className="flex flex-row gap-2 items-center">
-                                <AlertDialogCancel className="...">
-                                  Cancel
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(booking._id)}
-                                  className="flex items-center gap-2 ..." // make button a flex container, center items, add gap between icon & text
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  Delete Booking
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
           </TabsContent>
         </Tabs>
 
