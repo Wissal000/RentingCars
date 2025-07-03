@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-
+import { toast, ToastContainer } from "react-toastify";
 import { CarIcon, Gauge, Star, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -131,7 +131,7 @@ export default function Dashboard() {
         ...bookingForm,
         carId: selectedCar._id,
       });
-      alert("Booking confirmed!");
+      toast.success("Booking confirmed!");
       setSelectedCar(null);
       setBookingForm({
         firstName: "",
@@ -146,7 +146,7 @@ export default function Dashboard() {
       });
     } catch (error) {
       console.error("Booking failed:", error);
-      alert("Failed to book. Please try again.");
+      toast.error("Failed to book. Please try again.");
     }
   };
 
@@ -175,6 +175,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <ToastContainer position="top-right" autoClose={3000} />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
@@ -195,20 +196,6 @@ export default function Dashboard() {
                 {cars.length}
               </div>
               <p className="text-gray-600">Available Cars</p>
-            </CardContent>
-          </Card>
-          <Card className="text-center">
-            <CardContent className="pt-6">
-              <Star className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
-              <div className="text-2xl font-bold text-gray-900">4.9</div>
-              <p className="text-gray-600">Customer Rating</p>
-            </CardContent>
-          </Card>
-          <Card className="text-center">
-            <CardContent className="pt-6">
-              <Users className="h-8 w-8 mx-auto mb-2 text-green-600" />
-              <div className="text-2xl font-bold text-gray-900">10K+</div>
-              <p className="text-gray-600">Happy Customers</p>
             </CardContent>
           </Card>
         </div>

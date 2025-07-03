@@ -1,12 +1,10 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 import {
   Calendar,
   CarIcon,
-  Download,
   Edit,
-  Eye,
   Filter,
   Mail,
   MapPin,
@@ -18,13 +16,39 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-} from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+} from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast, ToastContainer } from "react-toastify";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -32,136 +56,147 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import axios from "axios"
+} from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import axios from "axios";
 
 interface Booking {
-  _id: string
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  licenseNumber: string
-  address: string
-  city: string
-  rentalStartDate: string
-  rentalEndDate: string
-  notes: string
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  licenseNumber: string;
+  address: string;
+  city: string;
+  rentalStartDate: string;
+  rentalEndDate: string;
+  notes: string;
   carId: {
-    name: string
-    brand: string
-    pricePerDay: string
-    fuelType: string
-    transmission: string
-    image?: string
-  }
-  status?: "pending" | "confirmed" | "active" | "completed" | "cancelled"
-  totalAmount?: number
-  createdAt?: string
+    name: string;
+    brand: string;
+    pricePerDay: string;
+    fuelType: string;
+    transmission: string;
+    image?: string;
+  };
+  status?: "pending" | "confirmed" | "active" | "completed" | "cancelled";
+  totalAmount?: number;
+  createdAt?: string;
 }
 
 export default function AdminBookingPage() {
-  const [bookings, setBookings] = useState<Booking[]>([])
-  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
-  const [viewMode, setViewMode] = useState<"cards" | "table">("cards")
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
 
   useEffect(() => {
-    async function fetchBookings() {
-      try {
-        const response = await axios.get("http://localhost:8080/booking")
-        const bookingsData = response.data.map((booking: any) => ({
-          ...booking,
-          // Ensure status exists, default to 'pending' if not provided
-          status: booking.status || "pending",
-          // Calculate total amount if not provided
-          totalAmount: booking.totalAmount || calculateTotalAmount(booking),
-          // Ensure createdAt exists
-          createdAt: booking.createdAt || booking.rentalStartDate,
-        }))
+    fetchBookings(); // now it works
+  }, []);
 
-        setBookings(bookingsData)
-        setFilteredBookings(bookingsData)
-      } catch (error) {
-        console.error("Error fetching bookings:", error)
-      } finally {
-        setLoading(false)
-      }
+  // ✅ Move fetchBookings outside
+  const fetchBookings = async () => {
+    try {
+      const response = await axios.get("http://localhost:8080/booking");
+      const bookingsData = response.data.map((booking: any) => ({
+        ...booking,
+        status: booking.status || "pending",
+        totalAmount: booking.totalAmount || calculateTotalAmount(booking),
+        createdAt: booking.createdAt || booking.rentalStartDate,
+      }));
+
+      setBookings(bookingsData);
+      setFilteredBookings(bookingsData);
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    fetchBookings()
-  }, [])
-
+  const handleDelete = async (bookingId: string) => {
+    try {
+      await axios.delete(`http://localhost:8080/booking/${bookingId}`);
+      toast.success("Booking deleted successfully!");
+      fetchBookings();
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Failed to delete booking");
+    }
+  };
   // Add helper function to calculate total amount if not provided by API
   const calculateTotalAmount = (booking: any) => {
-    const days = calculateDays(booking.rentalStartDate, booking.rentalEndDate)
-    const pricePerDay = Number.parseInt(booking.carId.pricePerDay.replace(/[^0-9]/g, "")) || 0
-    return days * pricePerDay
-  }
+    const days = calculateDays(booking.rentalStartDate, booking.rentalEndDate);
+    const pricePerDay =
+      Number.parseInt(booking.carId.pricePerDay.replace(/[^0-9]/g, "")) || 0;
+    return days * pricePerDay;
+  };
 
   useEffect(() => {
-    let filtered = bookings
+    let filtered = bookings;
 
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(
         (booking) =>
-          `${booking.firstName} ${booking.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          `${booking.firstName} ${booking.lastName}`
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
           booking.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
           booking.carId.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          booking.carId.brand?.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
+          booking.carId.brand?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
 
     // Filter by status
     if (statusFilter !== "all") {
-      filtered = filtered.filter((booking) => booking.status === statusFilter)
+      filtered = filtered.filter((booking) => booking.status === statusFilter);
     }
 
-    setFilteredBookings(filtered)
-  }, [searchTerm, statusFilter, bookings])
+    setFilteredBookings(filtered);
+  }, [searchTerm, statusFilter, bookings]);
 
   const getStatusIcon = (status?: string) => {
     switch (status) {
       case "confirmed":
-        return <CheckCircle className="h-4 w-4" />
+        return <CheckCircle className="h-4 w-4" />;
       case "active":
-        return <Clock className="h-4 w-4" />
+        return <Clock className="h-4 w-4" />;
       case "completed":
-        return <CheckCircle className="h-4 w-4" />
+        return <CheckCircle className="h-4 w-4" />;
       case "cancelled":
-        return <XCircle className="h-4 w-4" />
+        return <XCircle className="h-4 w-4" />;
       default:
-        return <AlertCircle className="h-4 w-4" />
+        return <AlertCircle className="h-4 w-4" />;
     }
-  }
+  };
 
   const getStatusColor = (status?: string) => {
     switch (status) {
       case "confirmed":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       case "active":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       case "completed":
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
       case "cancelled":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 text-red-800";
       default:
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 text-yellow-800";
     }
-  }
+  };
 
   const calculateDays = (startDate: string, endDate: string) => {
-    const start = new Date(startDate)
-    const end = new Date(endDate)
-    const diffTime = Math.abs(end.getTime() - start.getTime())
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  }
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
 
   const stats = {
     total: bookings.length,
@@ -169,7 +204,7 @@ export default function AdminBookingPage() {
     active: bookings.filter((b) => b.status === "active").length,
     completed: bookings.filter((b) => b.status === "completed").length,
     revenue: bookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0),
-  }
+  };
 
   const BookingSkeleton = () => (
     <Card>
@@ -183,7 +218,7 @@ export default function AdminBookingPage() {
         <Skeleton className="h-4 w-1/2" />
       </CardContent>
     </Card>
-  )
+  );
 
   if (loading) {
     return (
@@ -208,16 +243,21 @@ export default function AdminBookingPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <ToastContainer position="top-right" autoClose={3000} />
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Booking Management</h1>
-          <p className="text-gray-600">Manage and track all car rental bookings</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Booking Management
+          </h1>
+          <p className="text-gray-600">
+            Manage and track all car rental bookings
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -227,7 +267,9 @@ export default function AdminBookingPage() {
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-blue-600" />
                 <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.total}
+                  </p>
                   <p className="text-gray-600">Total Bookings</p>
                 </div>
               </div>
@@ -239,7 +281,9 @@ export default function AdminBookingPage() {
               <div className="flex items-center">
                 <AlertCircle className="h-8 w-8 text-yellow-600" />
                 <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.pending}
+                  </p>
                   <p className="text-gray-600">Pending</p>
                 </div>
               </div>
@@ -251,7 +295,9 @@ export default function AdminBookingPage() {
               <div className="flex items-center">
                 <Clock className="h-8 w-8 text-green-600" />
                 <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">{stats.active}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.active}
+                  </p>
                   <p className="text-gray-600">Active</p>
                 </div>
               </div>
@@ -263,7 +309,9 @@ export default function AdminBookingPage() {
               <div className="flex items-center">
                 <CheckCircle className="h-8 w-8 text-gray-600" />
                 <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.completed}
+                  </p>
                   <p className="text-gray-600">Completed</p>
                 </div>
               </div>
@@ -275,7 +323,9 @@ export default function AdminBookingPage() {
               <div className="flex items-center">
                 <CarIcon className="h-8 w-8 text-purple-600" />
                 <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">{stats.revenue} dh</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.revenue} dh
+                  </p>
                   <p className="text-gray-600">Revenue</p>
                 </div>
               </div>
@@ -315,12 +365,12 @@ export default function AdminBookingPage() {
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-
-                <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "cards" | "table")}>
+                <Tabs
+                  value={viewMode}
+                  onValueChange={(value) =>
+                    setViewMode(value as "cards" | "table")
+                  }
+                >
                   <TabsList>
                     <TabsTrigger value="cards">Cards</TabsTrigger>
                     <TabsTrigger value="table">Table</TabsTrigger>
@@ -336,7 +386,10 @@ export default function AdminBookingPage() {
           <TabsContent value="cards">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredBookings.map((booking) => (
-                <Card key={booking._id} className="hover:shadow-lg transition-shadow duration-200">
+                <Card
+                  key={booking._id}
+                  className="hover:shadow-lg transition-shadow duration-200"
+                >
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
                       <div>
@@ -344,16 +397,26 @@ export default function AdminBookingPage() {
                           {booking.firstName} {booking.lastName}
                         </CardTitle>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge className={`${getStatusColor(booking.status)} flex items-center gap-1`}>
+                          <Badge
+                            className={`${getStatusColor(
+                              booking.status
+                            )} flex items-center gap-1`}
+                          >
                             {getStatusIcon(booking.status)}
                             {booking.status || "pending"}
                           </Badge>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold text-green-600">dh {booking.totalAmount}</p>
+                        <p className="text-lg font-bold text-green-600">
+                          dh {booking.totalAmount}
+                        </p>
                         <p className="text-xs text-gray-500">
-                          {calculateDays(booking.rentalStartDate, booking.rentalEndDate)} days
+                          {calculateDays(
+                            booking.rentalStartDate,
+                            booking.rentalEndDate
+                          )}{" "}
+                          days
                         </p>
                       </div>
                     </div>
@@ -383,8 +446,8 @@ export default function AdminBookingPage() {
                         Rental Period
                       </div>
                       <p className="text-sm text-gray-600">
-                        {new Date(booking.rentalStartDate).toLocaleDateString()} →{" "}
-                        {new Date(booking.rentalEndDate).toLocaleDateString()}
+                        {new Date(booking.rentalStartDate).toLocaleDateString()}{" "}
+                        → {new Date(booking.rentalEndDate).toLocaleDateString()}
                       </p>
                     </div>
 
@@ -395,7 +458,9 @@ export default function AdminBookingPage() {
                           <p className="font-medium text-gray-900">
                             {booking.carId.brand} {booking.carId.name}
                           </p>
-                          <p className="text-sm text-gray-600">{booking.carId.pricePerDay}/day</p>
+                          <p className="text-sm text-gray-600">
+                            {booking.carId.pricePerDay}/day
+                          </p>
                           <div className="flex gap-1 mt-1">
                             <Badge variant="outline" className="text-xs">
                               {booking.carId.fuelType}
@@ -406,7 +471,10 @@ export default function AdminBookingPage() {
                           </div>
                         </div>
                         <img
-                          src={booking.carId.image || "/placeholder.svg?height=60&width=80"}
+                          src={
+                            booking.carId.image ||
+                            "/placeholder.svg?height=60&width=80"
+                          }
                           alt={`${booking.carId.brand} ${booking.carId.name}`}
                           className="w-16 h-12 object-cover rounded"
                         />
@@ -416,23 +484,23 @@ export default function AdminBookingPage() {
                     {/* Actions */}
                     <div className="flex gap-2 pt-2">
                       <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="flex-1 bg-transparent">
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Button>
-                        </DialogTrigger>
+                        <DialogTrigger asChild></DialogTrigger>
                         <DialogContent className="max-w-2xl">
                           <DialogHeader>
                             <DialogTitle>Booking Details</DialogTitle>
-                            <DialogDescription>Complete information for booking #{booking._id}</DialogDescription>
+                            <DialogDescription>
+                              Complete information for booking #{booking._id}
+                            </DialogDescription>
                           </DialogHeader>
                           <div className="grid grid-cols-2 gap-4 py-4">
                             <div>
-                              <h4 className="font-semibold mb-2">Customer Information</h4>
+                              <h4 className="font-semibold mb-2">
+                                Customer Information
+                              </h4>
                               <div className="space-y-1 text-sm">
                                 <p>
-                                  <strong>Name:</strong> {booking.firstName} {booking.lastName}
+                                  <strong>Name:</strong> {booking.firstName}{" "}
+                                  {booking.lastName}
                                 </p>
                                 <p>
                                   <strong>Email:</strong> {booking.email}
@@ -441,31 +509,47 @@ export default function AdminBookingPage() {
                                   <strong>Phone:</strong> {booking.phone}
                                 </p>
                                 <p>
-                                  <strong>License:</strong> {booking.licenseNumber}
+                                  <strong>License:</strong>{" "}
+                                  {booking.licenseNumber}
                                 </p>
                                 <p>
-                                  <strong>Address:</strong> {booking.address}, {booking.city}
+                                  <strong>Address:</strong> {booking.address},{" "}
+                                  {booking.city}
                                 </p>
                               </div>
                             </div>
                             <div>
-                              <h4 className="font-semibold mb-2">Rental Information</h4>
+                              <h4 className="font-semibold mb-2">
+                                Rental Information
+                              </h4>
                               <div className="space-y-1 text-sm">
                                 <p>
-                                  <strong>Car:</strong> {booking.carId.brand} {booking.carId.name}
+                                  <strong>Car:</strong> {booking.carId.brand}{" "}
+                                  {booking.carId.name}
                                 </p>
                                 <p>
-                                  <strong>Start Date:</strong> {new Date(booking.rentalStartDate).toLocaleDateString()}
+                                  <strong>Start Date:</strong>{" "}
+                                  {new Date(
+                                    booking.rentalStartDate
+                                  ).toLocaleDateString()}
                                 </p>
                                 <p>
-                                  <strong>End Date:</strong> {new Date(booking.rentalEndDate).toLocaleDateString()}
+                                  <strong>End Date:</strong>{" "}
+                                  {new Date(
+                                    booking.rentalEndDate
+                                  ).toLocaleDateString()}
                                 </p>
                                 <p>
                                   <strong>Duration:</strong>{" "}
-                                  {calculateDays(booking.rentalStartDate, booking.rentalEndDate)} days
+                                  {calculateDays(
+                                    booking.rentalStartDate,
+                                    booking.rentalEndDate
+                                  )}{" "}
+                                  days
                                 </p>
                                 <p>
-                                  <strong>Total Amount:</strong> dh{booking.totalAmount}
+                                  <strong>Total Amount:</strong> dh
+                                  {booking.totalAmount}
                                 </p>
                                 {booking.notes && (
                                   <p>
@@ -483,9 +567,41 @@ export default function AdminBookingPage() {
                         Edit
                       </Button>
 
-                      <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 bg-transparent">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 bg-transparent"
+                            aria-label="Delete booking"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+
+                        <AlertDialogContent className="max-w-sm">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="text-lg font-semibold">
+                              Are you sure?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription className="mt-1 text-sm text-muted-foreground">
+                              This will permanently delete the booking.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="flex flex-row gap-2 items-center">
+                            <AlertDialogCancel className="...">
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(booking._id)}
+                              className="flex items-center gap-2 ..." // make button a flex container, center items, add gap between icon & text
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Delete Booking
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </CardContent>
                 </Card>
@@ -514,7 +630,9 @@ export default function AdminBookingPage() {
                           <p className="font-medium">
                             {booking.firstName} {booking.lastName}
                           </p>
-                          <p className="text-sm text-gray-500">{booking.email}</p>
+                          <p className="text-sm text-gray-500">
+                            {booking.email}
+                          </p>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -522,35 +640,79 @@ export default function AdminBookingPage() {
                           <p className="font-medium">
                             {booking.carId.brand} {booking.carId.name}
                           </p>
-                          <p className="text-sm text-gray-500">{booking.carId.pricePerDay}/day</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="text-sm">{new Date(booking.rentalStartDate).toLocaleDateString()}</p>
                           <p className="text-sm text-gray-500">
-                            to {new Date(booking.rentalEndDate).toLocaleDateString()}
+                            {booking.carId.pricePerDay}/day
                           </p>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={`${getStatusColor(booking.status)} flex items-center gap-1 w-fit`}>
+                        <div>
+                          <p className="text-sm">
+                            {new Date(
+                              booking.rentalStartDate
+                            ).toLocaleDateString()}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            to{" "}
+                            {new Date(
+                              booking.rentalEndDate
+                            ).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={`${getStatusColor(
+                            booking.status
+                          )} flex items-center gap-1 w-fit`}
+                        >
                           {getStatusIcon(booking.status)}
                           {booking.status || "pending"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-medium">dh {booking.totalAmount}</TableCell>
+                      <TableCell className="font-medium">
+                        dh {booking.totalAmount}
+                      </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
                           <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-red-600">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 bg-transparent"
+                                aria-label="Delete booking"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+
+                            <AlertDialogContent className="max-w-sm">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle className="text-lg font-semibold">
+                                  Are you sure?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription className="mt-1 text-sm text-muted-foreground">
+                                  This will permanently delete the booking.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter className="flex flex-row gap-2 items-center">
+                                <AlertDialogCancel className="...">
+                                  Cancel
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(booking._id)}
+                                  className="flex items-center gap-2 ..." // make button a flex container, center items, add gap between icon & text
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Delete Booking
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -565,12 +727,16 @@ export default function AdminBookingPage() {
           <Card className="text-center py-12">
             <CardContent>
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings found</h3>
-              <p className="text-gray-500">Try adjusting your search or filter criteria.</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No bookings found
+              </h3>
+              <p className="text-gray-500">
+                Try adjusting your search or filter criteria.
+              </p>
             </CardContent>
           </Card>
         )}
       </div>
     </div>
-  )
+  );
 }

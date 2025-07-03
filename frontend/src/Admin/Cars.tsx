@@ -21,6 +21,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -451,7 +462,10 @@ export default function CarsAdminPage() {
                 <p className="text-gray-600 mb-6">
                   Get started by adding your first car to the system
                 </p>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => navigate("/admin/cars/add")}>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => navigate("/admin/cars/add")}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Your First Car
                 </Button>
@@ -555,14 +569,41 @@ export default function CarsAdminPage() {
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => deleteCar(car._id)}
-                              className="border-gray-300 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-700 bg-transparent"
+                                  aria-label="Delete booking"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+
+                              <AlertDialogContent className="max-w-sm">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="text-lg font-semibold">
+                                    Are you sure?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription className="mt-1 text-sm text-muted-foreground">
+                                    This will permanently delete the car.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter className="flex flex-row gap-2 items-center">
+                                  <AlertDialogCancel className="...">
+                                    Cancel
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteCar(car._id)}
+                                    className="flex items-center gap-2 ..." // make button a flex container, center items, add gap between icon & text
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    Delete Car
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </TableCell>
                       </TableRow>
