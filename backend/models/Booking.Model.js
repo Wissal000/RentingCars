@@ -12,6 +12,11 @@ const BookingDetailsSchema = new mongoose.Schema(
     rentalStartDate: { type: Date, required: true },
     rentalEndDate: { type: Date, required: true },
     carId: { type: mongoose.Schema.Types.ObjectId, ref: "Car", required: true },
+    status: {
+      type: String,
+      enum: ["pending", "confirmed", "active", "completed", "cancelled"],
+      default: "pending",
+    },
   },
   {
     timestamps: true,
