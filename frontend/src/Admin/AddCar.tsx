@@ -7,14 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 
 const AddCar = () => {
   const [formData, setFormData] = useState({
     name: "",
     brand: "",
     pricePerDay: "",
-    description: "",
     year: "",
     color: "",
     seats: "",
@@ -65,7 +63,7 @@ const AddCar = () => {
         body: payload,
       });
       if (!res.ok) {
-        alert("Failed to add car");
+        toast.error("Failed to add car");
         return;
       }
       toast.success("Car added successfully!");
@@ -200,19 +198,6 @@ const AddCar = () => {
                   <option value="automatique">Automatique</option>
                 </select>
               </div>
-            </div>
-
-            {/* Description */}
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                rows={3}
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Optional description"
-              />
             </div>
 
             {/* Image */}

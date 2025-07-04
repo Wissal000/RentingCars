@@ -11,10 +11,6 @@ import {
   Search,
   Trash2,
   Users,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
   Hash,
 } from "lucide-react";
 import {
@@ -28,7 +24,6 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,16 +36,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+
 import axios from "axios";
 
 interface Booking {
@@ -84,7 +72,6 @@ export default function AdminBookingPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"cards">("cards");
 
   useEffect(() => {
     fetchBookings();
@@ -99,7 +86,6 @@ export default function AdminBookingPage() {
         totalAmount: booking.totalAmount || calculateTotalAmount(booking),
         createdAt: booking.createdAt || booking.rentalStartDate,
       }));
-
       setBookings(bookingsData);
       setFilteredBookings(bookingsData);
     } catch (error) {
@@ -122,14 +108,10 @@ export default function AdminBookingPage() {
 
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
     try {
-      // Call your backend to send the notification email
-      const response = await axios.post(
-        `http://localhost:8080/booking/${bookingId}`,
-        { status: newStatus }
-      );
-
+      await axios.post(`http://localhost:8080/booking/${bookingId}`, {
+        status: newStatus,
+      });
       toast.success("Status updated & email sent successfully ✅");
-      // Refresh data
       fetchBookings();
     } catch (error) {
       console.error("Error updating status and sending email:", error);
@@ -137,7 +119,13 @@ export default function AdminBookingPage() {
     }
   };
 
-  // Add helper function to calculate total amount
+  const calculateDays = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
   const calculateTotalAmount = (booking: any) => {
     const days = calculateDays(booking.rentalStartDate, booking.rentalEndDate);
     const pricePerDay =
@@ -147,8 +135,6 @@ export default function AdminBookingPage() {
 
   useEffect(() => {
     let filtered = bookings;
-
-    // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(
         (booking) =>
@@ -157,18 +143,14 @@ export default function AdminBookingPage() {
             .includes(searchTerm.toLowerCase()) ||
           booking.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
           booking.carId.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          booking.carId.brand?.toLowerCase().includes(searchTerm.toLowerCase())
+          booking.carId.brand.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
-    // Filter by status
     if (statusFilter !== "all") {
       filtered = filtered.filter((booking) => booking.status === statusFilter);
     }
-
     setFilteredBookings(filtered);
   }, [searchTerm, statusFilter, bookings]);
-
 
   const getStatusColor = (status?: string) => {
     switch (status) {
@@ -183,51 +165,24 @@ export default function AdminBookingPage() {
     }
   };
 
-  const calculateDays = (startDate: string, endDate: string) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  };
-
   const stats = {
     total: bookings.length,
     revenue: bookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0),
   };
 
-  const BookingSkeleton = () => (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-6 w-3/4" />
-        <Skeleton className="h-4 w-1/2" />
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-2/3" />
-        <Skeleton className="h-4 w-1/2" />
-      </CardContent>
-    </Card>
-  );
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen p-6 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <Skeleton className="h-8 w-64 mb-6" />
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             {Array.from({ length: 4 }).map((_, i) => (
               <Card key={i}>
-                <CardContent className="p-6">
-                  <Skeleton className="h-8 w-8 mb-2" />
-                  <Skeleton className="h-6 w-16 mb-1" />
-                  <Skeleton className="h-4 w-20" />
+                <CardContent className="p-6 space-y-2">
+                  <Skeleton className="h-6 w-1/2" />
+                  <Skeleton className="h-4 w-3/4" />
                 </CardContent>
               </Card>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <BookingSkeleton key={i} />
             ))}
           </div>
         </div>
@@ -236,12 +191,12 @@ export default function AdminBookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <ToastContainer position="top-right" autoClose={3000} />
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">
             Booking Management
           </h1>
           <p className="text-gray-600">
@@ -249,329 +204,194 @@ export default function AdminBookingPage() {
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Users className="h-8 w-8 text-blue-600" />
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.total}
-                  </p>
-                  <p className="text-gray-600">Total Bookings</p>
-                </div>
+            <CardContent className="flex items-center p-6">
+              <Users className="h-8 w-8 text-blue-600" />
+              <div className="ml-4">
+                <p className="text-2xl font-bold">{stats.total}</p>
+                <p className="text-gray-600 text-sm">Total Bookings</p>
               </div>
             </CardContent>
           </Card>
-
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <CarIcon className="h-8 w-8 text-purple-600" />
-                <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.revenue} dh
-                  </p>
-                  <p className="text-gray-600">Revenue</p>
-                </div>
+            <CardContent className="flex items-center p-6">
+              <CarIcon className="h-8 w-8 text-purple-600" />
+              <div className="ml-4">
+                <p className="text-2xl font-bold">{stats.revenue} dh</p>
+                <p className="text-gray-600 text-sm">Total Revenue</p>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filters and Search */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              <div className="flex flex-col md:flex-row gap-4 flex-1">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Search bookings..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+        {/* Filter & Search */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:max-w-3xl">
+           <div className="flex items-center w-full bg-white border border-gray-300 rounded-md shadow-sm focus-within:ring-2 focus-within:ring-sky-400 transition">
+  <div className="pl-4 pr-2 text-gray-400">
+    <Search className="h-5 w-5" />
+  </div>
+  <input
+    type="text"
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+    placeholder="Search bookings..."
+    className="w-full py-2 pr-4 text-sm text-gray-700 bg-transparent focus:outline-none placeholder:text-gray-400"
+  />
+</div>
+
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="confirmed">Confirmed</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Booking Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredBookings.map((booking) => (
+            <Card key={booking._id} className="hover:shadow-md">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">
+                      {booking.firstName} {booking.lastName}
+                    </CardTitle>
+                    <div className="mt-1">
+                      <Select
+                        defaultValue={booking.status}
+                        onValueChange={(value) =>
+                          handleStatusChange(booking._id, value)
+                        }
+                      >
+                        <SelectTrigger
+                          className={`text-xs py-1 px-2 ${getStatusColor(
+                            booking.status
+                          )} rounded-full border-none`}
+                        >
+                          <SelectValue
+                            placeholder="pending"
+                            className="capitalize"
+                          />
+                        </SelectTrigger>
+                        <SelectContent className="text-sm">
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="confirmed">Confirmed</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-green-600">
+                      dh {booking.totalAmount}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {calculateDays(
+                        booking.rentalStartDate,
+                        booking.rentalEndDate
+                      )}{" "}
+                      days
+                    </p>
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-3 text-sm text-gray-600">
+                <div>
+                  <p>
+                    <Mail className="inline w-4 h-4 mr-1" />
+                    {booking.email}
+                  </p>
+                  <p>
+                    <Phone className="inline w-4 h-4 mr-1" />
+                    {booking.phone}
+                  </p>
+                  <p>
+                    <MapPin className="inline w-4 h-4 mr-1" />
+                    {booking.city}
+                  </p>
+                  <p>
+                    <Hash className="inline w-4 h-4 mr-1" />
+                    {booking.licenseNumber}
+                  </p>
                 </div>
 
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-48">
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="bg-gray-100 p-2 rounded">
+                  <p className="font-medium mb-1 flex items-center">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Rental Period
+                  </p>
+                  <p>
+                    {new Date(booking.rentalStartDate).toLocaleDateString()} →{" "}
+                    {new Date(booking.rentalEndDate).toLocaleDateString()}
+                  </p>
+                </div>
 
-              <div className="flex gap-2">
-                <Tabs
-                  value={viewMode}
-                  onValueChange={(value) => setViewMode(value as "cards")}
-                ></Tabs>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                <div className="bg-blue-50 p-2 rounded">
+                  <p className="font-semibold">
+                    {booking.carId.brand} {booking.carId.name}
+                  </p>
+                  <p className="text-sm">{booking.carId.pricePerDay} / day</p>
+                  <div className="flex gap-1 mt-1">
+                    <Badge variant="outline" className="text-xs">
+                      {booking.carId.fuelType}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {booking.carId.transmission}
+                    </Badge>
+                  </div>
+                </div>
 
-        {/* Bookings Display */}
-        <Tabs value={viewMode} className="w-full">
-          <TabsContent value="cards">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredBookings.map((booking) => (
-                <Card
-                  key={booking._id}
-                  className="hover:shadow-lg transition-shadow duration-200"
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">
-                          {booking.firstName} {booking.lastName}
-                        </CardTitle>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Select
-                            defaultValue={booking.status}
-                            onValueChange={(value) =>
-                              handleStatusChange(booking._id, value)
-                            }
-                          >
-                            <SelectTrigger
-                              className={`w-[140px] text-xs py-1 px-2 ${getStatusColor(
-                                booking.status
-                              )} flex items-center gap-1 rounded-full border-none shadow-none`}
-                            >
-                              <SelectValue
-                                placeholder="pending"
-                                className="flex items-center gap-1 capitalize"
-                              />
-                            </SelectTrigger>
-                            <SelectContent className="text-sm">
-                              <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="confirmed">
-                                Confirmed
-                              </SelectItem>
-                              
-                              <SelectItem value="completed">
-                                Completed
-                              </SelectItem>
-                              <SelectItem value="cancelled">
-                                Cancelled
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-green-600">
-                          dh {booking.totalAmount}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {calculateDays(
-                            booking.rentalStartDate,
-                            booking.rentalEndDate
-                          )}{" "}
-                          days
-                        </p>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-3">
-                    {/* Contact Info */}
-                    <div className="space-y-1">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Mail className="h-4 w-4 mr-2" />
-                        {booking.email}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Phone className="h-4 w-4 mr-2" />
-                        {booking.phone}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        {booking.city}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Hash className="h-4 w-4 mr-2" />
-                        {booking.licenseNumber}
-                      </div>
-                    </div>
-
-                    {/* Rental Period */}
-                    <div className="bg-gray-50 p-3 rounded-lg">
-                      <div className="flex items-center text-sm font-medium text-gray-700 mb-1">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Rental Period
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        {new Date(booking.rentalStartDate).toLocaleDateString()}{" "}
-                        → {new Date(booking.rentalEndDate).toLocaleDateString()}
-                      </p>
-                    </div>
-
-                    {/* Car Info */}
-                    <div className="bg-blue-50 p-3 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {booking.carId.brand} {booking.carId.name}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {booking.carId.pricePerDay}/day
-                          </p>
-                          <div className="flex gap-1 mt-1">
-                            <Badge variant="outline" className="text-xs">
-                              {booking.carId.fuelType}
-                            </Badge>
-                            <Badge variant="outline" className="text-xs">
-                              {booking.carId.transmission}
-                            </Badge>
-                          </div>
-                        </div>
-                        <img
-                          src={
-                            booking.carId.image ||
-                            "/placeholder.svg?height=60&width=80"
-                          }
-                          alt={`${booking.carId.brand} ${booking.carId.name}`}
-                          className="w-16 h-12 object-cover rounded"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2 pt-2">
-                      <Dialog>
-                        <DialogTrigger asChild></DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>Booking Details</DialogTitle>
-                            <DialogDescription>
-                              Complete information for booking #{booking._id}
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid grid-cols-2 gap-4 py-4">
-                            <div>
-                              <h4 className="font-semibold mb-2">
-                                Customer Information
-                              </h4>
-                              <div className="space-y-1 text-sm">
-                                <p>
-                                  <strong>Name:</strong> {booking.firstName}{" "}
-                                  {booking.lastName}
-                                </p>
-                                <p>
-                                  <strong>Email:</strong> {booking.email}
-                                </p>
-                                <p>
-                                  <strong>Phone:</strong> {booking.phone}
-                                </p>
-                                <p>
-                                  <strong>License:</strong>{" "}
-                                  {booking.licenseNumber}
-                                </p>
-                                <p>
-                                  <strong>Address:</strong> {booking.address},{" "}
-                                  {booking.city}
-                                </p>
-                              </div>
-                            </div>
-                            <div>
-                              <h4 className="font-semibold mb-2">
-                                Rental Information
-                              </h4>
-                              <div className="space-y-1 text-sm">
-                                <p>
-                                  <strong>Car:</strong> {booking.carId.brand}{" "}
-                                  {booking.carId.name}
-                                </p>
-                                <p>
-                                  <strong>Start Date:</strong>{" "}
-                                  {new Date(
-                                    booking.rentalStartDate
-                                  ).toLocaleDateString()}
-                                </p>
-                                <p>
-                                  <strong>End Date:</strong>{" "}
-                                  {new Date(
-                                    booking.rentalEndDate
-                                  ).toLocaleDateString()}
-                                </p>
-                                <p>
-                                  <strong>Duration:</strong>{" "}
-                                  {calculateDays(
-                                    booking.rentalStartDate,
-                                    booking.rentalEndDate
-                                  )}{" "}
-                                  days
-                                </p>
-                                <p>
-                                  <strong>Total Amount:</strong> dh
-                                  {booking.totalAmount}
-                                </p>
-                                {booking.notes && (
-                                  <p>
-                                    <strong>Notes:</strong> {booking.notes}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700 bg-transparent"
-                            aria-label="Delete booking"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-
-                        <AlertDialogContent className="max-w-sm">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="text-lg font-semibold">
-                              Are you sure?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription className="mt-1 text-sm text-muted-foreground">
-                              This will permanently delete the booking.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter className="flex flex-row gap-2 items-center">
-                            <AlertDialogCancel className="...">
-                              Cancel
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(booking._id)}
-                              className="flex items-center gap-2 ..." // make button a flex container, center items, add gap between icon & text
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Delete Booking
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
+                <div className="flex justify-end gap-2">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="max-w-sm">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete the booking.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(booking._id)}
+                        >
+                          <Trash2 className="h-4 w-4" /> Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
         {filteredBookings.length === 0 && !loading && (
-          <Card className="text-center py-12">
+          <Card className="text-center py-12 mt-10">
             <CardContent>
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
