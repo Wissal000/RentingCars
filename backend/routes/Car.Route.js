@@ -14,7 +14,6 @@ router.post("/add", upload.single("image"), async (req, res) => {
       name,
       brand,
       pricePerDay,
-      description,
       year,
       color,
       seats,
@@ -33,14 +32,13 @@ router.post("/add", upload.single("image"), async (req, res) => {
       name,
       brand,
       pricePerDay: String(pricePerDay),
-      description,
       year: Number(year),
       color: String(color),
       seats: Number(seats),
-      fuelType,
-      transmission, // <-- include here
+      fuelType, // just the value here (string like "Petrol")
+      transmission, // just the value here (string like "Manuelle" or "Automatique")
       image: imageUrl,
-      available, //
+      available,
     });
 
     const savedCar = await newCar.save();
@@ -112,11 +110,9 @@ router.put("/:id", upload.single("image"), async (req, res) => {
       updateData.image = req.file.path;
     }
 
-    const updatedCar = await Car.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true }
-    );
+    const updatedCar = await Car.findByIdAndUpdate(req.params.id, updateData, {
+      new: true,
+    });
 
     if (!updatedCar) {
       return res.status(404).json({ message: "Car not found" });

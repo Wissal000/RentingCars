@@ -6,7 +6,6 @@ const carSchema = new mongoose.Schema(
     name: { type: String, required: true }, // e.g. Clio 5
     brand: { type: String, required: true }, // e.g. Renault, Peugeot
     pricePerDay: { type: String, required: true }, // e.g. "300dh"
-    description: { type: String },
     year: { type: Number }, // e.g. 2022
     color: {type: String, required: true},
     fuelType: {
