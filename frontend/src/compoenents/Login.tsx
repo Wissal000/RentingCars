@@ -14,7 +14,7 @@ import {
   MdSpeed,
   MdVerifiedUser,
 } from "react-icons/md";
-import { FaGoogle, FaFacebook, FaApple } from "react-icons/fa";
+import { FaGoogle } from "react-icons/fa";
 import "./Login.css";
 import loginCar from "../assets/carBack.png";
 
@@ -37,6 +37,32 @@ const Login = () => {
       setRememberMe(true);
     }
   }, []);
+
+  useEffect(() => {
+    const sheet = document.styleSheets[0];
+    try {
+      sheet.insertRule(
+        `input:-webkit-autofill {
+        box-shadow: 0 0 0 1000px rgb(0, 0, 0) inset !important;
+        -webkit-text-fill-color: #eee !important;
+      }`,
+        sheet.cssRules.length
+      );
+    } catch (err) {
+      console.warn("Autofill rule insert failed:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      localStorage.setItem("token", token);
+      toast.success("Logged in with Google!");
+      window.history.replaceState({}, document.title, "/dashboard");
+      navigate("/dashboard");
+    }
+  }, [navigate]);
 
   const validateForm = () => {
     const newErrors = { email: "", password: "" };
@@ -105,8 +131,7 @@ const Login = () => {
   };
 
   const handleSocialLogin = (provider: string) => {
-    console.log(`Login with ${provider}`);
-    // Implement social login logic here
+    window.location.href = `http://localhost:8080/auth/${provider}`;
   };
 
   const features = [
@@ -162,25 +187,11 @@ const Login = () => {
                 className="social-btn google"
                 onClick={() => handleSocialLogin("google")}
               >
-                <FaGoogle />
+                <FaGoogle style={{ marginRight: 8 }} />
                 <span>Continue with Google</span>
               </button>
-              <div className="social-row">
-                <button
-                  type="button"
-                  className="social-btn facebook"
-                  onClick={() => handleSocialLogin("facebook")}
-                >
-                  <FaFacebook />
-                </button>
-                <button
-                  type="button"
-                  className="social-btn apple"
-                  onClick={() => handleSocialLogin("apple")}
-                >
-                  <FaApple />
-                </button>
-              </div>
+
+              <div className="social-row"></div>
             </div>
 
             <div className="divider">

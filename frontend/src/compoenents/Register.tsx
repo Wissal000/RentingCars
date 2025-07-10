@@ -16,7 +16,7 @@ import {
   FiUsers,
   FiCheck,
 } from "react-icons/fi";
-import { FaGoogle, FaFacebook, FaApple } from "react-icons/fa";
+import { FaGoogle } from "react-icons/fa";
 import "./Register.css";
 import BackImg from "../assets/carBack.png";
 
@@ -100,6 +100,23 @@ const Register = () => {
     setErrors(newErrors);
     return isValid;
   };
+
+  const handleSocialLogin = (provider: string) => {
+    window.location.href = `http://localhost:8080/auth/${provider}`;
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+
+    if (token) {
+      localStorage.setItem("token", token);
+      toast.success("Signed in with Google!", { autoClose: 3000 });
+
+      window.history.replaceState({}, document.title, "/dashboard");
+      navigate("/dashboard"); // ✅ go directly to dashboard
+    }
+  }, [navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -188,7 +205,6 @@ const Register = () => {
     "24/7 customer support",
     "Exclusive member discounts",
     "Priority booking system",
-    "Mobile app access",
   ];
 
   const getPasswordStrengthText = () => {
@@ -267,27 +283,13 @@ const Register = () => {
               <button
                 type="button"
                 className="social-btn google"
-                onClick={() => handleSocialRegister("google")}
+                onClick={() => handleSocialLogin("google")}
               >
-                <FaGoogle />
+                <FaGoogle style={{ marginRight: 8 }} />
                 <span>Continue with Google</span>
               </button>
-              <div className="social-row">
-                <button
-                  type="button"
-                  className="social-btn facebook"
-                  onClick={() => handleSocialRegister("facebook")}
-                >
-                  <FaFacebook />
-                </button>
-                <button
-                  type="button"
-                  className="social-btn apple"
-                  onClick={() => handleSocialRegister("apple")}
-                >
-                  <FaApple />
-                </button>
-              </div>
+
+              <div className="social-row"></div>
             </div>
 
             <div className="divider">
